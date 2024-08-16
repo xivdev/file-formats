@@ -1,0 +1,50 @@
+struct Header
+{
+    uint16 raceSexId;
+    uint16 linksId;
+    int32 offset;
+    float unkScale;
+};
+
+struct BoneDeform(int64 namePosition)
+{
+    local int64 position = FTell();
+    FSeek(namePosition);
+    string name;
+    FSeek(position);
+    float deformMatrix[12];
+};
+
+struct Links
+{
+    int16 parentId;
+    int16 firstChildId;
+    int16 nextSiblingId;
+    int16 headerId;
+};
+
+struct Deformer
+{
+    local int64 start = FTell();
+    int32 boneCount;
+    int16 boneOffsets[boneCount];
+    if ((boneCount % 2) != 0) {
+        int16 padding;
+    };
+    local int32 i;
+    for (i = 0; i < boneCount; ++i) {
+        BoneDeform deforms(start + boneOffsets[i]);
+    }
+};
+
+int32 entryCount;
+Header headers[entryCount];
+Links links[entryCount];
+
+local int32 i;
+for (i = 0; i < entryCount; ++i) {
+    if (headers[i].offset > 0) {
+        FSeek(headers[i].offset);
+        Deformer deformers;
+    }
+}

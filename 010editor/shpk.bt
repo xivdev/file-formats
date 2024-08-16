@@ -1,0 +1,125 @@
+struct Resource
+{
+    int32 id;
+    int32 nameOffset;
+    int16 nameSize;
+    int16 unk;
+    int16 slot;
+    int16 size;
+
+    local int64 pos = FTell();
+    FSeek(stringsOffset + nameOffset);
+    char name[nameSize];
+    FSeek(pos);
+};
+
+struct Shader(byte stage)
+{
+    int32 blobOffset;
+    int32 blobSize;
+    int16 constantCount;
+    int16 samplerCount;
+    int16 uavCount;
+    int16 textureCount;
+
+    Resource constants[constantCount]<optimize=false>;
+    Resource samplers[samplerCount]<optimize=false>;
+    Resource uavs[uavCount]<optimize=false>;
+    Resource textures[textureCount]<optimize=false>;
+
+    local int64 pos = FTell();
+    local int64 size = blobSize;
+    FSeek(blobsOffset + blobOffset);
+    if (stage == 0 && size >= 4) {
+        int32 declaredInputs;
+        size -= 4;
+    }
+    if (stage == 0 && graphicsPlatform == "DX11" && size >= 4) {
+        int32 usedInputs;
+        size -= 4;
+    }
+    byte blob[size];
+    FSeek(pos);
+};
+
+struct MaterialParam
+{
+    int32 id;
+    int16 byteOffset;
+    int16 byteSize;
+};
+
+struct ShaderKey
+{
+    int32 key;
+    int32 defaultValue;
+};
+
+struct Pass
+{
+    int32 id;
+    int32 vertexShader;
+    int32 pixelShader;
+};
+
+struct Node
+{
+    int32 selector;
+    int32 passCount;
+    byte passIndices[16];
+    int32 systemKeys[systemKeyCount];
+    int32 sceneKeys[sceneKeyCount];
+    int32 materialKeys[materialKeyCount];
+    int32 subViewKeys[2];
+    Pass passes[passCount];
+};
+
+struct NodeAlias
+{
+    int32 selector;
+    int32 node;
+};
+
+char magic[4];
+int32 version;
+char graphicsPlatform[4];
+int32 fileSize;
+int32 blobsOffset;
+int32 stringsOffset;
+int32 vertexShaderCount;
+int32 pixelShaderCount;
+int32 materialParamsSize;
+int16 materialParamCount;
+int16 hasMaterialParamDefaults;
+int16 constantCount;
+int16 unk1;
+int16 samplerCount;
+int16 textureCount;
+int16 uavCount;
+int16 unk2;
+int32 systemKeyCount;
+int32 sceneKeyCount;
+int32 materialKeyCount;
+int32 nodeCount;
+int32 nodeAliasCount;
+
+Shader vertexShader(0)[vertexShaderCount]<optimize=false>;
+Shader pixelShader(1)[pixelShaderCount]<optimize=false>;
+
+MaterialParam materialParams[materialParamCount]<optimize=false>;
+if (hasMaterialParamDefaults != 0) {
+    float materialParamDefaults[materialParamsSize / 4];
+}
+
+Resource constants[constantCount]<optimize=false>;
+Resource samplers[samplerCount]<optimize=false>;
+Resource textures[textureCount]<optimize=false>;
+Resource uavs[uavCount]<optimize=false>;
+
+ShaderKey systemKeys[systemKeyCount];
+ShaderKey sceneKeys[sceneKeyCount];
+ShaderKey materialKeys[materialKeyCount];
+int32 subViewKeyDefaults[2];
+
+Node nodes[nodeCount]<optimize=false>;
+NodeAlias nodealiases[nodeAliasCount];

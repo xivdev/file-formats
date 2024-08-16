@@ -1,0 +1,115 @@
+const uint32 ELEMENTS = 128;
+
+struct Color
+{
+    hfloat r;
+    hfloat g;
+    hfloat b;
+    local uint32 rb = (uint32)Floor(Sqrt(Max(Min(r, 1.0), 0.0)) * 255.0 + 0.5);
+    local uint32 gb = (uint32)Floor(Sqrt(Max(Min(g, 1.0), 0.0)) * 255.0 + 0.5);
+    local uint32 bb = (uint32)Floor(Sqrt(Max(Min(b, 1.0), 0.0)) * 255.0 + 0.5);
+    local uint32 value = bb << 16 | gb << 8 | rb;
+};
+
+struct ColorList(int32 halves)
+{
+    local int64 base = FTell();
+    local int32 i;
+    local int64 pos;
+    if (halves >= 3 * ELEMENTS) {
+        for (i = 0; i < halves; i += 3) {
+            pos = FTell();
+            Color _color <hidden=true>;
+            FSeek(pos);
+            SetBackColor(_color.value);
+            Color color;
+            SetBackColor(cNone);
+        }
+    } else if (halves >= ELEMENTS >> 1) {
+        local int32 colorHalves = halves - (ELEMENTS >> 1);
+        for (i = 0; i < colorHalves; i += 3) {
+            pos = FTell();
+            Color _color <hidden=true>;
+            FSeek(pos);
+            SetBackColor(_color.value);
+            Color color;
+            SetBackColor(cNone);
+        }
+        FSeek(base + colorHalves * 2);
+        byte indices[ELEMENTS];
+    } else if (halves > 3) {
+        hfloat data[halves];
+    } else if (halves == 3) {
+        pos = FTell();
+        Color _color <hidden=true>;
+        FSeek(pos);
+        SetBackColor(_color.value);
+        Color color;
+        SetBackColor(cNone);
+    } else if (halves > 0) {
+        hfloat data[halves];
+    }
+    FSeek(base + halves * 2);
+};
+
+struct ScalarList(int32 halves)
+{
+    local int64 base = FTell();
+    local int32 i;
+    if (halves >= 3 * ELEMENTS) {
+        hfloat values[halves];
+    } else if (halves >= ELEMENTS >> 1) {
+        local int32 valueHalves = halves - (ELEMENTS >> 1);
+        hfloat values[valueHalves];
+        byte indices[ELEMENTS];
+    } else if (halves > 0) {
+        hfloat data[halves];
+    }
+    FSeek(base + halves * 2);
+};
+
+struct EntryV1
+{
+    uint16 ends[5];
+    ColorList diffuse(ends[0]) <optimize=false>;
+    ColorList specular(ends[1] - ends[0]) <optimize=false>;
+    ColorList emissive(ends[2] - ends[1]) <optimize=false>;
+    ScalarList shininess(ends[3] - ends[2]);
+    ScalarList specular_mask(ends[4] - ends[3]);
+};
+
+struct EntryV2
+{
+    uint16 ends[12];
+    ColorList diffuse(ends[0]) <optimize=false>;
+    ColorList specular(ends[1] - ends[0]) <optimize=false>;
+    ColorList emissive(ends[2] - ends[1]) <optimize=false>;
+    ScalarList scalar3(ends[3] - ends[2]);
+    ScalarList scalar4(ends[4] - ends[3]);
+    ScalarList scalar5(ends[5] - ends[4]);
+    ScalarList scalar6(ends[6] - ends[5]);
+    ScalarList scalar7(ends[7] - ends[6]);
+    ScalarList scalar8(ends[8] - ends[7]);
+    ScalarList anisotropy(ends[9] - ends[8]);
+    ScalarList scalar10(ends[10] - ends[9]);
+    ScalarList scalar11(ends[11] - ends[10]);
+};
+
+uint16 magic;
+uint16 version;
+uint16 entryCount;
+uint16 unk;
+uint16 keys[entryCount];
+uint16 offsets[entryCount];
+
+local int64 base = FTell();
+
+local int32 i;
+for (i = 0; i < entryCount; ++i) {
+    FSeek(base + offsets[i] * 2);
+    if ((version & 0xFF00) == 0x0100) {
+        EntryV1 entry;
+    } else if ((version & 0xFF00) == 0x0200) {
+        EntryV2 entry;
+    }
+}

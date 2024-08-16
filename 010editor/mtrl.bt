@@ -1,0 +1,170 @@
+struct Texture
+{
+    int16 pathOffset;
+    int16 flags;
+
+    local int64 pos = FTell();
+    FSeek(stringTableOffset + pathOffset);
+    string path;
+    FSeek(pos);
+};
+
+struct AttributeSet
+{
+    int16 nameOffset;
+    int16 index;
+
+    local int64 pos = FTell();
+    FSeek(stringTableOffset + nameOffset);
+    string name;
+    FSeek(pos);
+};
+
+struct ShaderKey
+{
+    int32 key;
+    int32 value;
+};
+
+struct Constant
+{
+    int32 id;
+    int16 byteOffset;
+    int16 byteSize;
+
+    local int64 pos = FTell();
+    FSeek(shaderValueListOffset + byteOffset);
+    float value[byteSize >> 2];
+    FSeek(pos);
+};
+
+struct Sampler
+{
+    int32 id;
+    int32 flags;
+    byte textureIndex;
+    byte paddingA;
+    int16 paddingB;
+};
+
+struct Color
+{
+    hfloat r;
+    hfloat g;
+    hfloat b;
+    local uint32 rb = (uint32)Floor(Sqrt(Max(Min(r, 1.0), 0.0)) * 255.0 + 0.5);
+    local uint32 gb = (uint32)Floor(Sqrt(Max(Min(g, 1.0), 0.0)) * 255.0 + 0.5);
+    local uint32 bb = (uint32)Floor(Sqrt(Max(Min(b, 1.0), 0.0)) * 255.0 + 0.5);
+    local uint32 value = bb << 16 | gb << 8 | rb;
+};
+
+struct ColorRow(int columns)
+{
+    local int64 base = FTell();
+    if (columns >= 12) {
+        Color _diff <hidden=true>;
+        hfloat _3 <hidden=true>;
+        Color _spec <hidden=true>;
+        hfloat _7 <hidden=true>;
+        Color _emi <hidden=true>;
+        FSeek(base);
+        SetBackColor(_diff.value);
+        Color diffuse;
+        SetBackColor(cNone);
+        hfloat scalar3;
+        SetBackColor(_spec.value);
+        Color specular;
+        SetBackColor(cNone);
+        hfloat scalar7;
+        SetBackColor(_emi.value);
+        Color emissive;
+        SetBackColor(cNone);
+        hfloat scalar11;
+        hfloat rest[columns - 12];
+    } else if (columns >= 8) {
+        Color _diff <hidden=true>;
+        hfloat _3 <hidden=true>;
+        Color _spec <hidden=true>;
+        FSeek(base);
+        SetBackColor(_diff.value);
+        Color diffuse;
+        SetBackColor(cNone);
+        hfloat scalar3;
+        SetBackColor(_spec.value);
+        Color specular;
+        SetBackColor(cNone);
+        hfloat scalar7;
+        hfloat rest[columns - 8];
+    } else if (columns >= 4) {
+        Color _diff <hidden=true>;
+        FSeek(base);
+        SetBackColor(_diff.value);
+        Color diffuse;
+        SetBackColor(cNone);
+        hfloat scalar3;
+        hfloat rest[columns - 4];
+    } else {
+        hfloat rest[columns];
+    }
+};
+
+int32 version;
+int16 fileSize;
+int16 dataSetSize;
+int16 stringTableSize;
+int16 shaderPackageNameOffset;
+byte textureCount;
+byte uvSetCount;
+byte colorSetCount;
+byte additionalDataSize;
+
+local int64 stringTableOffset = FTell() + (textureCount + uvSetCount + colorSetCount) * 4;
+
+{
+    local int64 pos = FTell();
+    FSeek(stringTableOffset + shaderPackageNameOffset);
+    string shaderPackageName;
+    FSeek(pos);
+}
+
+Texture textures[textureCount]<optimize=false>;
+AttributeSet uvSets[uvSetCount]<optimize=false>;
+AttributeSet colorSet[colorSetCount]<optimize=false>;
+
+FSeek(stringTableOffset + stringTableSize);
+
+local byte additionalDataRemaining = additionalDataSize;
+if (additionalDataRemaining >= 4) {
+    int32 unkFlags;
+    additionalDataRemaining -= 4;
+}
+float additionalDataFloats[additionalDataRemaining >> 2];
+byte additionalDataBytes[additionalDataRemaining & 3];
+
+local int16 dataSetRemaining = dataSetSize;
+local int16 colorTableWidthLog = (unkFlags >> 4) == 0 ? 2 : (unkFlags >> 4) & 0xF;
+local int16 colorTableHeightLog = (unkFlags >> 4) == 0 ? 4 : (unkFlags >> 8) & 0xF;
+if ((unkFlags & 4) == 4 && dataSetRemaining >= 8 << (colorTableWidthLog + colorTableHeightLog)) {
+    ColorRow colorTable(4 << colorTableWidthLog)[1 << colorTableHeightLog]<optimize=false>;
+    dataSetRemaining -= 8 << (colorTableWidthLog + colorTableHeightLog);
+}
+if ((unkFlags & 0xFC) == 0x0C && dataSetRemaining >= 2 << colorTableHeightLog) {
+    int16 colorDyeTable[1 << colorTableHeightLog];
+    dataSetRemaining -= 2 << colorTableHeightLog;
+} else if ((unkFlags & 12) == 12 && dataSetRemaining >= 4 << colorTableHeightLog) {
+    int32 colorDyeTable[1 << colorTableHeightLog];
+    dataSetRemaining -= 4 << colorTableHeightLog;
+}
+byte dataSet[dataSetRemaining];
+
+int16 shaderValueListSize;
+int16 shaderKeyCount;
+int16 constantCount;
+int16 samplerCount;
+int32 shaderPackageFlags;
+
+local int64 shaderValueListOffset = FTell() + (shaderKeyCount + constantCount) * 8 + samplerCount * 12;
+
+ShaderKey shaderKeys[shaderKeyCount];
+Constant constants[constantCount]<optimize=false>;
+Sampler samplers[samplerCount];
