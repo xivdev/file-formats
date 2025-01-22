@@ -1,0 +1,23 @@
+struct ImcEntry
+{
+    byte MaterialId;
+    byte DecalId;
+    ushort AttributeAndSound;
+    byte VfxId;
+    byte MaterialAnimationId;
+};
+
+struct Variant(ushort partCount)
+{
+    ImcEntry Parts[partCount];
+};
+
+ushort Count;
+ushort PartMask;
+
+local ushort TmpPopCnt1 = (PartMask   & 0x5555) + ((PartMask   >> 1) & 0x5555);
+local ushort TmpPopCnt2 = (TmpPopCnt1 & 0x3333) + ((TmpPopCnt1 >> 2) & 0x3333);
+local ushort TmpPopCnt3 = (TmpPopCnt2 & 0x0F0F) + ((TmpPopCnt2 >> 4) & 0x0F0F);
+local ushort PartCount  = (TmpPopCnt3 & 0x00FF) + ((TmpPopCnt3 >> 8) & 0x00FF);
+
+Variant Variants(PartCount)[Count + 1]<optimize=true>;
