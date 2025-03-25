@@ -21,6 +21,12 @@ struct Shader(byte stage)
     int16 samplerCount;
     int16 uavCount;
     int16 textureCount;
+    if (version >= 0x0D01) {
+        int32 unk131d;
+        if (stage == 0 && unk131d != 1 || stage == 1 && unk131d != 4) {
+            Printf("Shader(stage: %u).unk131d = %d\n", stage, unk131d);
+        }
+    }
 
     Resource constants[constantCount]<optimize=false>;
     Resource samplers[samplerCount]<optimize=false>;
@@ -60,6 +66,20 @@ struct Pass
     int32 id;
     int32 vertexShader;
     int32 pixelShader;
+    if (version >= 0x0D01) {
+        int32 unk131g;
+        if (unk131g != -1) {
+            Printf("Pass.unk131g = %d\n", unk131g);
+        }
+        int32 unk131h;
+        if (unk131h != -1) {
+            Printf("Pass.unk131h = %d\n", unk131h);
+        }
+        int32 unk131i;
+        if (unk131i != -1) {
+            Printf("Pass.unk131i = %d\n", unk131i);
+        }
+    }
 };
 
 struct Node
@@ -67,10 +87,18 @@ struct Node
     int32 selector;
     int32 passCount;
     byte passIndices[16];
+    if (version >= 0x0D01) {
+        int32 subViewKeys[2];
+    }
     int32 systemKeys[systemKeyCount];
     int32 sceneKeys[sceneKeyCount];
     int32 materialKeys[materialKeyCount];
-    int32 subViewKeys[2];
+    if (version >= 0x0D01) {
+        int32 unk131e;
+        int32 unk131f;
+    } else {
+        int32 subViewKeys[2];
+    }
     Pass passes[passCount];
 };
 
@@ -102,6 +130,21 @@ int32 sceneKeyCount;
 int32 materialKeyCount;
 int32 nodeCount;
 int32 nodeAliasCount;
+
+if (version >= 0x0D01) {
+    int32 unk131a;
+    if (unk131a != 0) {
+        Printf("unk131a = %d\n", unk131a);
+    }
+    int32 unk131b;
+    if (unk131b != 0) {
+        Printf("unk131b = %d\n", unk131b);
+    }
+    int32 unk131c;
+    if (unk131c != 0) {
+        Printf("unk131c = %d\n", unk131c);
+    }
+}
 
 Shader vertexShader(0)[vertexShaderCount]<optimize=false>;
 Shader pixelShader(1)[pixelShaderCount]<optimize=false>;
