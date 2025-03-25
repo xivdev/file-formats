@@ -88,16 +88,20 @@ struct Node
     int32 passCount;
     byte passIndices[16];
     if (version >= 0x0D01) {
-        int32 subViewKeys[2];
+        int32 unk131e;
+        int32 unk131f;
     }
     int32 systemKeys[systemKeyCount];
     int32 sceneKeys[sceneKeyCount];
     int32 materialKeys[materialKeyCount];
+    int32 subViewKeys[2];
     if (version >= 0x0D01) {
-        int32 unk131e;
-        int32 unk131f;
-    } else {
-        int32 subViewKeys[2];
+        if (unk131e != subViewKeys[0]) {
+            Printf("Node.unk131e = %d, Node.subViewKeys[0] = %d", unk131e, subViewKeys[0]);
+        }
+        if (unk131f != subViewKeys[1]) {
+            Printf("Node.unk131f = %d, Node.subViewKeys[1] = %d", unk131f, subViewKeys[1]);·
+        }
     }
     Pass passes[passCount];
 };
