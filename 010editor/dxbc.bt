@@ -1,0 +1,477 @@
+struct RdefVariableMember;
+struct RdefVariableType;
+struct RdefVariable;
+struct RdefCbuffer;
+struct RdefBind;
+struct SgnElement;
+struct DxbcPart;
+
+string ReadRdefVariableMember(RdefVariableMember &member) {
+    return member.name;
+}
+
+typedef struct (uint64 start, byte rd11) {
+    uint32 nameOffset;
+    uint32 typeOffset;
+    uint32 start;
+    local uint64 pos = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(start + typeOffset);
+    RdefVariableType type(start, rd11);
+    FSeek(pos);
+} RdefVariableMember <read=ReadRdefVariableMember>;
+
+string ReadRdefVariableType(RdefVariableType &type) {
+    if (type.numElements > 0) {
+        local string s;
+        SPrintf(s, "%s[%d]", type.name, type.numElements);
+        return s;
+    } else {
+        return type.name;
+    }
+}
+
+enum <uint16> ShaderVariableClass {
+    SvcScalar = 0,
+    SvcVector,
+    SvcMatrixRows,
+    SvcMatrixColumns,
+    SvcObject,
+    SvcStruct,
+    SvcInterfaceClass,
+    SvcInterfacePointer,
+};
+
+enum <uint16> ShaderVariableType {
+    SvtVoid = 0,
+    SvtBool = 1,
+    SvtInt = 2,
+    SvtFloat = 3,
+    SvtString = 4,
+    SvtTexture = 5,
+    SvtTexture1D = 6,
+    SvtTexture2D = 7,
+    SvtTexture3D = 8,
+    SvtTextureCube = 9,
+    SvtSampler = 10,
+    SvtSampler1D = 11,
+    SvtSampler2D = 12,
+    SvtSampler3D = 13,
+    SvtSamplerCube = 14,
+    SvtPixelShader = 15,
+    SvtVertexShader = 16,
+    SvtPixelFragment = 17,
+    SvtVertexFragment = 18,
+    SvtUInt = 19,
+    SvtUInt8 = 20,
+    SvtGeometryShader = 21,
+    SvtRasterizer = 22,
+    SvtDepthStencil = 23,
+    SvtBlend = 24,
+    SvtBuffer = 25,
+    SvtCBuffer = 26,
+    SvtTBuffer = 27,
+    SvtTexture1DArray = 28,
+    SvtTexture2DArray = 29,
+    SvtRenderTargetView = 30,
+    SvtDepthStencilView = 31,
+    SvtTexture2DMS = 32,
+    SvtTexture2DMSArray = 33,
+    SvtTextureCubeArray = 34,
+    SvtHullShader = 35,
+    SvtDomainShader = 36,
+    SvtInterfacePointer = 37,
+    SvtComputeShader = 38,
+    SvtDouble = 39,
+    SvtRWTexture1D = 40,
+    SvtRWTexture1DArray = 41,
+    SvtRWTexture2D = 42,
+    SvtRWTexture2DArray = 43,
+    SvtRWTexture3D = 44,
+    SvtRWBuffer = 45,
+    SvtByteAddressBuffer = 46,
+    SvtRWByteAddressBuffer = 47,
+    SvtStructuredBuffer = 48,
+    SvtRWStructuredBuffer = 49,
+    SvtAppendStructuredBuffer = 50,
+    SvtConsumeStructuredBuffer = 51,
+    SvtMin8Float = 52,
+    SvtMin10Float = 53,
+    SvtMin16Float = 54,
+    SvtMin12Int = 55,
+    SvtMin16Int = 56,
+    SvtMin16UInt = 57,
+    SvtInt16,
+    SvtUInt16,
+    SvtFloat16,
+    SvtInt64,
+    SvtUInt64,
+};
+
+typedef struct (uint64 start, byte rd11) {
+    ShaderVariableClass class;
+    ShaderVariableType type;
+    uint16 numRows;
+    uint16 numColumns;
+    uint16 numElements;
+    uint16 memberCount;
+    uint32 memberOffset;
+    if (rd11) {
+        uint32 parentTypeOffset;
+        uint32 rd11Unk1;
+        if (rd11Unk1 != 0) {
+            Printf("RdefVariableType.rd11Unk1 = %u\n", rd11Unk1);
+        }
+        uint32 rd11Unk2;
+        if (rd11Unk2 != 0) {
+            Printf("RdefVariableType.rd11Unk2 = %u\n", rd11Unk2);
+        }
+        uint32 rd11Unk3;
+        if (rd11Unk3 != 0) {
+            Printf("RdefVariableType.rd11Unk3 = %u\n", rd11Unk3);
+        }
+        uint32 nameOffset;
+    }
+    local uint64 pos = FTell();
+    if (rd11) {
+        FSeek(start + nameOffset);
+        string name;
+    }
+    if (memberCount > 0) {
+        FSeek(start + memberOffset);
+        RdefVariableMember members(start, rd11)[memberCount] <optimize=false>;
+    }
+    FSeek(pos);
+} RdefVariableType <read=ReadRdefVariableType>;
+
+string ReadRdefVariable(RdefVariable &var) {
+    return var.name;
+}
+
+typedef struct (uint64 start, byte rd11) {
+    uint32 nameOffset;
+    uint32 start;
+    uint32 size;
+    uint32 flags;
+    uint32 typeOffset;
+    uint32 defaultOffset;
+    if (rd11) {
+        int32 textureStart;
+        int32 textureSize;
+        int32 samplerStart;
+        int32 samplerSize;
+    }
+    local uint64 pos = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(start + typeOffset);
+    RdefVariableType type(start, rd11);
+    if (defaultOffset > 0) {
+        FSeek(start + defaultOffset);
+        byte defaultValue[size];
+    }
+    FSeek(pos);
+} RdefVariable <read=ReadRdefVariable>;
+
+enum <uint32> CBufferType {
+    CtCBuffer = 0,
+    CtTBuffer,
+    CtInterfacePointers,
+    CtResourceBindInfo,
+};
+
+string ReadRdefCbuffer(RdefCbuffer &cbuf) {
+    return cbuf.name;
+}
+
+typedef struct (uint64 start, byte rd11) {
+    uint32 nameOffset;
+    uint32 variableCount;
+    uint32 variableOffset;
+    uint32 size;
+    uint32 flags;
+    CBufferType cbufferType;
+    local uint64 pos = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(start + variableOffset);
+    RdefVariable variables(start, rd11)[variableCount] <optimize=false>;
+    FSeek(pos);
+} RdefCbuffer <read=ReadRdefCbuffer>;
+
+enum <uint32> ShaderInputType {
+    SitCBuffer = 0,
+    SitTBuffer,
+    SitTexture,
+    SitSampler,
+    SitUavRWTyped,
+    SitStructured,
+    SitUavRWStructured,
+    SitByteAddress,
+    SitUavRWByteAddress,
+    SitUavAppendStructured,
+    SitUavConsumeStructured,
+    SitUavRWStructuredWithCounter,
+    SitRtAccelerationStructure,
+    SitUavFeedbackTexture,
+};
+
+enum <uint32> ResourceReturnType {
+    RetUNorm = 1,
+    RetSNorm = 2,
+    RetSInt = 3,
+    RetUInt = 4,
+    RetFloat = 5,
+    RetMixed = 6,
+    RetDouble = 7,
+    RetContinued = 8,
+};
+
+enum <uint32> SrvDimension {
+    DimUnknown = 0,
+    DimBuffer = 1,
+    DimTexture1D = 2,
+    DimTexture1DArray = 3,
+    DimTexture2D = 4,
+    DimTexture2DArray = 5,
+    DimTexture2DMS = 6,
+    DimTexture2DMSArray = 7,
+    DimTexture3D = 8,
+    DimTextureCube = 9,
+    DimTextureCubeArray = 10,
+    DimBufferEx = 11,
+};
+
+string ReadRdefBind(RdefBind &bind) {
+    return bind.name;
+}
+
+typedef struct (uint64 start) {
+    uint32 nameOffset;
+    ShaderInputType inputType;
+    ResourceReturnType returnType;
+    SrvDimension viewDimension;
+    uint32 numSamples;
+    uint32 bindPoint;
+    uint32 bindCount;
+    uint32 inputFlags;
+    local uint64 pos = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(pos);
+} RdefBind <read=ReadRdefBind>;
+
+enum <uint32> SystemValueType {
+    SvUndefined = 0,
+    SvPosition = 1,
+    SvClipDistance = 2,
+    SvCullDistance = 3,
+    SvRenderTargetArrayIndex = 4,
+    SvViewportArrayIndex = 5,
+    SvVertexID = 6,
+    SvPrimitiveID = 7,
+    SvInstanceID = 8,
+    SvIsFrontFace = 9,
+    SvSampleIndex = 10,
+    SvFinalQuadEdgeTessFactor = 11,
+    SvFinalQuadInsideTessFactor = 12,
+    SvFinalTriEdgeTessFactor = 13,
+    SvFinalTriInsideTessFactor = 14,
+    SvFinalLineDetailTessFactor = 15,
+    SvFinalLineDensityTessFactor = 16,
+    SvBarycentrics = 23,
+    SvShadingRate,
+    SvCullPrimitive,
+    SvTarget = 64,
+    SvDepth = 65,
+    SvCoverage = 66,
+    SvDepthGreaterEqual = 67,
+    SvDepthLessEqual = 68,
+    SvStencilRef = 69,
+    SvInnerCoverage = 70,
+};
+
+enum <uint32> RegisterComponentType {
+    RcUnknown = 0,
+    RcUInt32 = 1,
+    RcSInt32 = 2,
+    RcFloat32 = 3,
+    RcUInt16,
+    RcSInt16,
+    RcFloat16,
+    RcUInt64,
+    RcSInt64,
+    RcFloat64,
+};
+
+string ReadSgnElement(SgnElement &element) {
+    local string s;
+    SPrintf(s, "%s%u", element.name, element.semanticIndex);
+    return s;
+}
+
+typedef struct (uint64 start) {
+    uint32 nameOffset;
+    uint32 semanticIndex;
+    SystemValueType systemValueType;
+    RegisterComponentType componentType;
+    uint32 registerNum;
+    byte mask;
+    byte readWriteMask;
+    byte stream;
+    byte padding;
+    local uint64 pos = FTell();
+    FSeek(start + nameOffset);
+    string name;
+    FSeek(pos);
+} SgnElement <read=ReadSgnElement>;
+
+string ReadDxbcPart(DxbcPart &part) {
+    return part.type;
+}
+
+typedef struct {
+    SetBackColor(0xFF0000);
+    byte type[4];
+    uint32 size;
+    SetBackColor(cNone);
+    // SetBackColor(0x9900);
+    local uint64 start = FTell();
+    if (type == "RDEF") {
+        uint32 cbufferCount;
+        uint32 cbufferOffset;
+        uint32 bindCount;
+        uint32 bindOffset;
+        byte minor;
+        byte major;
+        uint16 programType;
+        uint32 compileFlags;
+        uint32 creatorOffset;
+        byte extMagic[4];
+        if (extMagic == "RD11") {
+            uint32 rd11Unk1;
+            if (rd11Unk1 != 60) {
+                Printf("DxbcPart<RDEF>.rd11Unk1 = %u\n", rd11Unk1);
+            }
+            uint32 rd11Unk2;
+            if (rd11Unk2 != 24) {
+                Printf("DxbcPart<RDEF>.rd11Unk2 = %u\n", rd11Unk2);
+            }
+            uint32 rd11Unk3;
+            if (rd11Unk3 != 32) {
+                Printf("DxbcPart<RDEF>.rd11Unk3 = %u\n", rd11Unk3);
+            }
+            uint32 rd11Unk4;
+            if (rd11Unk4 != 40) {
+                Printf("DxbcPart<RDEF>.rd11Unk4 = %u\n", rd11Unk4);
+            }
+            uint32 rd11Unk5;
+            if (rd11Unk5 != 36) {
+                Printf("DxbcPart<RDEF>.rd11Unk5 = %u\n", rd11Unk5);
+            }
+            uint32 rd11Unk6;
+            if (rd11Unk6 != 12) {
+                Printf("DxbcPart<RDEF>.rd11Unk6 = %u\n", rd11Unk6);
+            }
+            uint32 rd11Unk7;
+            if (rd11Unk7 != 0) {
+                Printf("DxbcPart<RDEF>.rd11Unk7 = %u\n", rd11Unk7);
+            }
+        }
+        FSeek(start + cbufferOffset);
+        RdefCbuffer cbuffers(start, extMagic == "RD11")[cbufferCount] <optimize=false>;
+        FSeek(start + bindOffset);
+        RdefBind binds(start)[bindCount] <optimize=false>;
+        FSeek(start + creatorOffset);
+        string creator;
+        FSeek(start + size);
+    } else if (type == "ISGN" || type == "OSGN") {
+        uint32 count;
+        uint32 sgnUnk1;
+        if (sgnUnk1 != 8) {
+            Printf("DxbcPart<%s>.sgnUnk1 = %u\n", type, sgnUnk1);
+        }
+        SgnElement elements(start)[count] <optimize=false>;
+        FSeek(start + size);
+    } else if (type == "SHDR" || type == "SHEX") {
+        uint32 programVersion;
+        uint32 tokenCount;
+        if (tokenCount != (size >> 2)) {
+            Printf("DxbcPart<%s>.tokenCount = %u, expected %u\n", tokenCount, size >> 2);
+        }
+        uint32 tokens[(size >> 2) - 2];
+    } else if (type == "STAT") {
+        uint32 instructionCount;
+        uint32 tempRegisterCount;
+        uint32 defineCount;
+        uint32 declarationCount;
+        uint32 floatInstructionCount;
+        uint32 intInstructionCount;
+        uint32 uintInstructionCount;
+        uint32 staticFlowControlCount;
+        uint32 dynamicFlowControlCount;
+        uint32 macroInstructionCount;
+        uint32 tempArrayCount;
+        uint32 arrayInstructionCount;
+        uint32 cutInstructionCount;
+        uint32 emitInstructionCount;
+        uint32 textureNormalInstructions;
+        uint32 textureLoadInstructions;
+        uint32 textureComparisonInstructions;
+        uint32 textureBiasInstructions;
+        uint32 textureGradientInstructions;
+        uint32 movInstructionCount;
+        uint32 movcInstructionCount;
+        uint32 conversionInstructionCount;
+        uint32 statUnk1;
+        if (statUnk1 != 0) {
+            Printf("DxbcPart<STAT>.statUnk1 = %u\n", statUnk1);
+        }
+        uint32 inputPrimitiveForGeometryShaders;
+        uint32 geometryShaderPrimitiveTopology;
+        uint32 geometryShaderMaxOutputVertexCount;
+        uint32 statUnk2;
+        if (statUnk2 != 0) {
+            Printf("DxbcPart<STAT>.statUnk2 = %u\n", statUnk2);
+        }
+        uint32 statUnk3;
+        if (statUnk3 != 0) {
+            Printf("DxbcPart<STAT>.statUnk3 = %u\n", statUnk3);
+        }
+        uint32 isSampleFrequencyShader;
+        if (FTell() - start < size) {
+            uint32 statUnk4;
+            if (statUnk4 != 0) {
+                Printf("DxbcPart<STAT>.statUnk4 = %u\n", statUnk4);
+            }
+            uint32 controlPoints;
+            uint32 hullShaderOutputPrimitive;
+            uint32 hullShaderPartitioning;
+            uint32 tessellatorDomain;
+            uint32 barrierInstructions;
+            uint32 interlockedInstructions;
+            uint32 textureStoreInstructions;
+        }
+    }
+    local uint64 extraSize = size + start - FTell();
+    if (extraSize > 0) {
+        SetBackColor(0xFF);
+        byte extra[extraSize];
+    }
+    SetBackColor(cNone);
+} DxbcPart <read=ReadDxbcPart>;
+
+byte magic[4];
+byte digest[16];
+uint16 major;
+uint16 minor;
+uint32 size;
+uint32 partCount;
+uint32 partOffsets[partCount];
+
+local uint32 i;
+for (i = 0; i < partCount; ++i) {
+    FSeek(partOffsets[i]);
+    DxbcPart parts;
+}
