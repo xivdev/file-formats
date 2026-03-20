@@ -2,6 +2,7 @@
 #pragma endian little
 
 import std.core;
+import type.base;
 
 bitfield MipCountAndFlag {
     mipCount : 7;
@@ -89,10 +90,30 @@ fn calculate_surface_size(TextureFormat format, u32 width, u32 height, u32 depth
     return bytes * depth;
 };
 
+struct Block128 {
+    type::Hex<u64> lower;
+    type::Hex<u64> upper;
+};
+
 struct Surface {
     u32 offset;
     if (offset != 0) {
-        u8 surface[calculate_surface_size(parent.format, parent.width, parent.height, parent.depth, std::core::array_index())] @ offset;
+        auto type = (u32(parent.format) & 0xF000) >> 12;
+        auto bpp = 1 << ((u32(parent.format) & 0xF0) >> 4);
+        auto size = calculate_surface_size(parent.format, parent.width, parent.height, parent.depth, std::core::array_index());
+        auto element_size = ((bpp << ((type == 3 || type == 6) ? 4 : 0)) + 7) >> 3;
+        if (element_size == 16) {
+            Block128 surface[size >> 4] @ offset;
+        } else if (element_size == 8) {
+            type::Hex<u64> surface[size >> 3] @ offset;
+        } else if (element_size == 4) {
+            type::Hex<u32> surface[size >> 2] @ offset;
+        } else if (element_size == 2) {
+            type::Hex<u16> surface[size >> 1] @ offset;
+        } else {
+            type::Hex<u8> surface[size] @ offset;
+        }
+        type::Hex<u8> surface_extra[size % element_size] @ offset + size - (size % element_size);
     }
 };
 
