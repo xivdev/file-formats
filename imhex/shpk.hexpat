@@ -58,6 +58,12 @@ struct ShaderPackageHeader<auto Version> {
         u32 domainShaderCount;
         u32 geometryShaderCount;
     }
+    if (Version >= 14) {
+        type::Hex<u32> unk141a;
+        if (unk141a != 4) {
+            std::warning(std::format("ShaderPackageHeader.unk141a = {}", unk141a));
+        }
+    }
 };
 
 struct Shader<auto Version, auto ProgramType> {
