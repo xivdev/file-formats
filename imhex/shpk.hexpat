@@ -2,6 +2,7 @@
 #pragma magic [ 53 68 50 6B ] @ 0x00
 #pragma endian little
 #pragma pattern_limit 2097152
+#pragma array_limit 262144
 
 import hex.core;
 import std.core;
@@ -31,9 +32,6 @@ struct Resource {
     u16 size;
 };
 
-struct ShaderPackageHeader13 {
-};
-
 struct ShaderPackageHeader<auto Version> {
     if (Version >= 11) {
         u32 vertexShaderCount;
@@ -59,10 +57,7 @@ struct ShaderPackageHeader<auto Version> {
         u32 geometryShaderCount;
     }
     if (Version >= 14) {
-        type::Hex<u32> unk141a;
-        if (unk141a != 4) {
-            std::warning(std::format("ShaderPackageHeader.unk141a = {}", unk141a));
-        }
+        u32 nodeAliasClusterCount;
     }
 };
 
@@ -160,6 +155,22 @@ struct NodeAlias
     u32 node;
 };
 
+struct NodeAliasSubCluster
+{
+    u16 ownIndex;
+    u16 aliasCount;
+    NodeAlias alises[aliasCount];
+} [[fixed_size(0x188)]];
+
+struct NodeAliasCluster
+{
+    type::Hex<u32> subViewKey1;
+    type::Hex<u32> subViewKey0;
+    u32 subClusterCount;
+    type::Hex<u32> unk141e;
+    NodeAliasSubCluster subClusters[subClusterCount];
+};
+
 Header header @ $ [[name("ShPk header")]];
 ShaderPackageHeader<header.majorVersion> packageHeader @ $ [[name("Package header")]];
 
@@ -183,4 +194,8 @@ ShaderKey materialKeys[packageHeader.materialKeyCount] @ $;
 type::Hex<u32> subViewKeyDefaults[2] @ $;
 
 Node<header.majorVersion, packageHeader.systemKeyCount, packageHeader.sceneKeyCount, packageHeader.materialKeyCount> nodes[packageHeader.nodeCount] @ $;
-NodeAlias nodealiases[packageHeader.nodeAliasCount] @ $;
+NodeAlias nodeAliases[packageHeader.nodeAliasCount] @ $;
+
+NodeAliasCluster nodeAliasClusters[header.majorVersion >= 14 ? packageHeader.nodeAliasClusterCount : 0] @ $;
+
+u8 startOfRest[header.blobsOffset > $] @ $;
