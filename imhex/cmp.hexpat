@@ -16,6 +16,11 @@ struct ColourParams {
     Colour feature[256];
     Colour lipLight[128];
     Colour facePaintLight[128];
+    
+    Colour unused_eye[256];
+    Colour unused2_eye[256];
+    Colour unused3_eye[256];
+    Colour unused4_feature[256];
 };
 
 struct CommonParams {
