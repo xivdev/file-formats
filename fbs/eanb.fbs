@@ -1,0 +1,49 @@
+namespace FFXIV;
+
+struct FloatRange {
+  first:float;
+  second:float;
+}
+
+table EyeAnimationEntry {
+  // Currently only the first profile_key == 0 will be loaded
+  profile_key:int;
+
+  // Runtime fallback: [0.5..1.5]
+  // Random delay between target changes during the wandering phase
+  interval_sec:FloatRange;
+
+  // Runtime fallback: [2..4]
+  // Random horizontal angular step magnitude
+  horizontal_step_deg:FloatRange;
+
+  // Runtime fallback: [0.5..1]
+  // Random vertical angular step magnitude
+  vertical_step_deg:FloatRange;
+
+  // Runtime fallback: 15
+  // Interpolation coefficient multiplied by delta
+  // Negative snaps instantly to target
+  eye_interpolation_rate:float;
+
+  // Runtime fallback: [0..0]
+  // Random duration of the rest phase
+  rest_phase_duration_sec:FloatRange;
+
+  // Runtime fallback: [0..0]
+  // Random duration of the wandering phase
+  wandering_phase_duration_sec:FloatRange;
+
+  // Runtime fallback: [0..0]
+  // Random delay after LookAt stops suppressing saccades, before the rest-wandering cycle resumes
+  post_lookat_reentry_delay_sec:FloatRange;
+}
+
+table EyeAnimationBinary {
+  major_version:ushort = 1;
+  minor_version:ushort;
+  entries:[EyeAnimationEntry];
+}
+
+root_type EyeAnimationBinary;
+file_identifier "EANB";
