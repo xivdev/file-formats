@@ -1,0 +1,58 @@
+namespace FFXIV;
+
+
+enum ModelType : ushort {
+  Human = 0,
+  DemiHuman = 1,
+  Monster = 2,
+  Weapon = 3,
+
+  Fallback = 4
+}
+
+enum SkeletonType : ushort {
+  Base = 0,   // b
+  Face = 1,   // f
+  Hair = 2,   // h
+  Met = 3,    // m
+  Top = 4,    // t
+  Parts = 5   // p
+}
+
+table PartInfo {
+  // XXXX component of bXXXX/fXXXX/hXXXX/mXXXX/tXXXX/pXXXX.
+  part_id:uint;
+
+  // Exactly one character matching part_type: b, f, h, m, t, or p
+  part_prefix:string;
+
+  // If true, load the .bnmb resource
+  has_resource:bool;
+}
+
+table PartGroup {
+  part_type:SkeletonType;
+  parts:[PartInfo];
+}
+
+table ModelEntry {
+  // cXXXX/dXXXX/mXXXX/wXXXX identifier
+  model_id:uint;
+
+  model_type:ModelType;
+  part_groups:[PartGroup];
+}
+
+table BonamikLoadBinary {
+  major_version:ushort = 1;
+  minor_version:ushort;
+
+  // (model_id, model_type) overrides, first matching entry gets selected
+  entries:[ModelEntry];
+
+  // Fallback, if no match in 'entries', game uses this one, which will have ModelType.Fallback
+  default_entry:ModelEntry;
+}
+
+root_type BonamikLoadBinary;
+file_identifier "BKLB";
