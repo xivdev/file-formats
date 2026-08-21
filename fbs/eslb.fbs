@@ -1,0 +1,74 @@
+namespace FFXIV;
+
+
+enum ModelType : ushort {
+  Human = 0,
+  DemiHuman = 1,
+  Monster = 2,
+  Weapon = 3
+}
+
+// Yoinked from Penumbra/Otter, ty xoxo
+enum ModelIdType : uint {
+    Invalid = 0,
+    Sword = 201,
+    Axe = 401,
+    Bow = 601,
+    Staff_THM_A = 801,
+    Staff_THM_B = 821,
+    Staff_THM_C = 831,
+    Staff_CNJ_A = 1001,
+    Staff_CNJ_B = 1028,
+    Staff_CNJ_C = 1033,
+    Broadsword = 1501,
+    Book_A = 1701,
+    Book_B = 1730,
+    Book_C = 1736,
+    Book_D = 1752,
+    Book_E = 1753,
+    Daggers = 1801,
+    Daggers_Offhand = 1851,
+    Orrery = 2101,
+    Katana_A = 2201,
+    Katana_B = 2215,
+    Katana_Sheathe_A = 2251,
+    Katana_Sheathe_B = 2259,
+    Glaives = 2611,
+    Glaives_Off = 2661,
+    Scythe = 2816,
+    Cross_Pein_Hammer = 5103,
+    Knife = 5405,
+    Needle = 5503,
+    Pickaxe = 7004,
+    Fishing_Rod = 7202,
+}
+
+table PartInfo {
+  // XXXX component of pXXXX for the extra/partial weapon skeleton
+  // Same as weapon model's bXXXX
+  part_id:uint;
+
+  // Exactly one character, always p
+  part_prefix:string;
+
+  // If true, load extra parts (sklb/phyb/kdb/bnmb possibly)
+  // chara/weapon/wXXXX/skeleton/parts/pYYYY
+  has_resources:bool;
+}
+
+table ModelEntry {
+  // XXXX component of chara/weapon/wXXXX/etc
+  model_id:ModelIdType;
+
+  model_type:ModelType;
+  parts:[PartInfo];
+}
+
+table ExtraSkeletonLoadBinary {
+  major_version:ushort = 1;
+  minor_version:ushort;
+  entries:[ModelEntry];
+}
+
+root_type ExtraSkeletonLoadBinary;
+file_identifier "ESLB";
