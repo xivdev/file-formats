@@ -1,0 +1,89 @@
+namespace FFXIV;
+
+
+enum ModelType : ushort {
+  Human = 0,
+  DemiHuman = 1,
+  Monster = 2,
+  Weapon = 3
+}
+
+enum SkeletonType : ushort {
+  Base = 0, // b
+  Face = 1, // f
+  Hair = 2, // h
+  Met = 3,  // m
+  Top = 4,  // t
+  Parts = 5 // p
+}
+
+enum FacialParameter : ushort {
+  Jaw = 0,
+  Eyebrows = 1,
+  EyeShape = 2,
+  Mouth = 3,
+  Nose = 4,
+  SmallIris = 5
+}
+
+enum TransformType : ushort {
+  TranslationX = 0,
+  TranslationY = 1,
+  TranslationZ = 2,
+  RotationX = 3,
+  RotationY = 4,
+  RotationZ = 5,
+  ScaleX = 6,
+  ScaleY = 7,
+  ScaleZ = 8
+}
+
+struct Float3 {
+  x:float;
+  y:float;
+  z:float;
+}
+
+table BoneTransformEdit {
+  // 32-bit FNV-1a hash of the bone name
+  bone_name_hash:uint;
+
+  components:[TransformType];
+
+  translation:Float3;
+  rotation_deg:Float3;
+  scale:Float3;
+}
+
+table ParameterValueEntry {
+  value:uint;
+  bone_edits:[BoneTransformEdit];
+}
+
+table ParameterEntry {
+  parameter:FacialParameter;
+  values:[ParameterValueEntry];
+}
+
+table PartEntry {
+  // XXXX component of bXXXX/fXXXX/hXXXX/mXXXX/tXXXX/pXXXX
+  part_id:uint;
+  part_type:SkeletonType;
+  parameters:[ParameterEntry];
+}
+
+table ModelEntry {
+  // cXXXX/dXXXX/mXXXX/wXXXX identifier
+  model_id:uint;
+  model_type:ModelType;
+  parts:[PartEntry];
+}
+
+table FacialParameterEditBinary {
+  major_version:ushort = 1;
+  minor_version:ushort;
+  entries:[ModelEntry];
+}
+
+root_type FacialParameterEditBinary;
+file_identifier "FPEB";
