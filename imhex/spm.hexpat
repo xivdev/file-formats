@@ -14,6 +14,8 @@ enum ColumnType : u32 {
 };
 
 enum ColumnName : u32 {
+    Null = 0,
+
     LightingType = 0xE8001A59,
     SubSurfaceProfileID = 0x8FB53404,
     SubSurfaceWidth = 0xF30D1232,
@@ -37,14 +39,20 @@ enum ColumnName : u32 {
 };
 
 enum TableName : u32 {
+    Null = 0,
+
     BG = 0x2AF7F9B4,
     CHARA = 0xB9FDFB6C,
     COMMON = 0xA4D61674,
 };
 
 enum ValueName : u32 {
+    Null = 0,
+
     DEFAULT = 0x417721BB,
     LEGACY = 0x56F16FCB,
+    HAIR = 0x8B2653B1,
+    HALF = 0xEC8B7389,
 };
 
 struct ColumnDefinition {
